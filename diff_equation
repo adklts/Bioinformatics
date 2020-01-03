@@ -1,0 +1,12 @@
+function pdot = f (p, t)
+  pdot = zeros (1,1);
+  kapa1=0.1;
+  kapa2=0.01;
+  pdot(1)= kapa1 - kapa2 * p(1);
+endfunction
+
+
+p0 = [0];
+t = linspace (0, 100, 101);
+p = lsode ("f", p0, t);
+plot(t,p);
