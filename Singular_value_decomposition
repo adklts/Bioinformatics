@@ -1,0 +1,33 @@
+A = rand(4, 4)
+C = A'
+
+D= (A')'
+
+B =rand(3, 5)
+K = B'
+L=(B')'
+
+
+
+
+
+t = linspace(0, 150, 16)
+a = sin((2*pi*t)/150)
+b = repmat(a, 16, 1)
+
+
+noise = randn(16, 16)
+
+c = noise + b
+ 
+z = c(1:5, :)
+
+hold on
+plot(t,z)
+[U S V]=svd(c)
+
+s = sum(diag(S))
+p= (100*diag(S)/s)
+bar(p)
+xlabel("singular value")
+ylabel("contribution of each singular value (%)")
