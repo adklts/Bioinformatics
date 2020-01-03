@@ -1,0 +1,15 @@
+library(chromstaR)
+library(GenomicRanges)
+library(HilbertCurve)
+library(circlize)
+bampath <-"C:/Users/Admin/Documents/R/win-library/3.6/GenomicRanges/extdata/wgEncodeUwRepliSeqBg02esG1bAlnRep1.bam"
+bam <- bampath
+
+reads <- readBamFileAsGRanges(bam, chromosomes='chr1', pairedEndReads=FALSE,
+                    min.mapq=10, remove.duplicate.reads=TRUE)
+
+hc = GenomicHilbertCurve(chr = "chr1", level = 5)
+hc_points(hc, reads, gp = gpar(col = "red"))  
+##hc_segments(hc, reads, gp = gpar(lwd = 6, col = rand_color(length(reads))))
+
+ Maybe you need ellipses package 
