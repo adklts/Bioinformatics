@@ -1,0 +1,18 @@
+import MySQLdb
+
+ mydb = MySQLdb.connect(host = 'localhost', user = 'root', passwd = '1234', db = 'dna') cur = mydb.cursor()
+
+records = input ('Enter number or records to be inserted:')
+
+for x in range(records):
+	statement = "INSERT INTO gene(gene_id, chromosome, hugo_id, go_term, go_evid) VALUES(%s, %s, %s, %s, %s)”
+	gene_id_var= input ('Enter gene_id:')
+	chromosome_var= input ('Enter chromosome:')
+	hugo_id_var= input ('Enter hugo_id:')
+ 	go_term_var= input ('Enter go_term:')
+	go_evid_var= input ('Enter go_evid:')
+cur.execute(statement, (gene_id_var, chromosome_var, hugo_id_var, go_term_var, go_evid_var))
+statement = "select * from gene"
+command = cur.execute(statement) results = cur.fetchall()
+for record in results:
+	print record[0] , ",", record[1] , ",", record[2],",", record[3],",", record[4]
