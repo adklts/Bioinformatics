@@ -1,0 +1,63 @@
+#install package caret
+install.packages("caret")
+library(caret)
+
+
+#loading file
+
+data1<-read.delim("C://Users/Admin/Desktop/bnp573work/WT_Differential_Expression_for_R.tab", header=T, sep="\t", row.names = 1)
+View(data1)
+
+mdata <- data.matrix(data1)
+
+#prepare data
+data <- rbind(mdata, 0)
+rownames(mdata)[nrow(mdata)] = "State"
+dataTransposed <- as.data.frame(t(mdata))
+rm(mdata)
+str(dataTransposed)
+View(dataTransposed)
+
+#M for MALE
+for(i in seq (1, 4, 1))
+{
+  dataTransposed[i, ncol(dataTransposed)] = "M"
+}
+#F for FEMALE
+for(i in seq (5, 8, 1))
+{
+  dataTransposed[i, ncol(dataTransposed)] = "F"
+}
+
+dataTransposed$State <- as.factor(dataTransposed$State)
+levels(dataTransposed$State)#check levels of 'State' column
+
+#data partition
+set.seed(200)
+
+partition <-  createDataPartition(dataTransposed$State, p=0.65, list=FALSE)#sample(2, nrow(dataTransposed), replace = TRUE, prob = c(0.6, 0.4))
+trainData <- dataTransposed[partition, ]
+testData  <- dataTransposed[-partition, ]
+
+#10-fold cross validation
+fitControl <- trainControl(## 10-fold CV
+  method = "cv", number = 10, savePredictions = TRUE)
+
+#CARET random forest execution
+set.seed(100)
+
+#Logistic regression
+lreg <- train(State~.,data = trainData, method="glm", family = binomial(), trControl = fitControl)
+
+#Decision Tree
+install.packages("party")
+library(party)
+dtree <- train(State~., data = trainData, method="ctree", trControl = fitControl)
+
+#Predictions on testData dataset
+lreg_pred  <- predict(lreg, testData)
+dtree_pred <- predict(dtree, testData)
+
+#Confusion matrices
+confusionMatrix(lreg_pred, testData$State)
+confusionMatrix(dtree_pred, testData$State)
