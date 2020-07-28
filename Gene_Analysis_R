@@ -1,0 +1,188 @@
+#setting directory and loading the data
+setwd("C:/vnp54")
+df1<- read.delim("GeneExpressionDataset_normalized.tsv", sep="\t", header=TRUE, row.names=1)
+View(df1)
+data_Matrix <-as.matrix(df1)
+
+#submatrix
+WT_df1 <- df1[c(1:10)]
+TG_df1 <- df1[c(11:20)]
+A_df1 <- df1[c(21:30)]
+B_df1 <- df1[c(31:40)]
+C_df1 <- df1[c(41:50)]
+D_df1 <- df1[c(51:60)]
+
+#rowmeans
+WT<-as.data.frame(rowMeans(WT_df1))
+TG<-as.data.frame(rowMeans(TG_df1))
+A<-as.data.frame(rowMeans(A_df1))
+B<-as.data.frame(rowMeans(B_df1))
+C<-as.data.frame(rowMeans(C_df1))
+D<-as.data.frame(rowMeans(D_df1))
+
+#log2FC
+log2FC_TG= TG - WT
+log2FC_A= A - WT
+log2FC_B= B - WT
+log2FC_C= C - WT
+log2FC_D= D - WT
+
+library(plyr)
+#t.test and fdr adjustment
+library(lestat)
+library(stats)
+
+data_Matrix$p.value=apply(df1, 1,function(x){t.test(x[1:10], x[11:20])$p.value})
+T_G=data_Matrix$p.value
+TG_adjust = "p.adjust"(T_G, method = "fdr")
+
+data_Matrix$p.value=apply(df1,1,function(x){t.test(x[1:10], x[21:30])$p.value})
+A1=data_Matrix$p.value
+A_adjust = "p.adjust"(A1, method = "fdr")
+
+data_Matrix$p.value=apply(df1,1,function(x){t.test(x[1:10], x[31:40])$p.value})
+B2=data_Matrix$p.value
+B_adjust = "p.adjust"(B2, method = "fdr")
+
+data_Matrix$p.value=apply(df1,1,function(x){t.test(x[1:10], x[41:50])$p.value})
+C3=data_Matrix$p.value
+C_adjust = "p.adjust"(C3, method = "fdr")
+
+data_Matrix$p.value=apply(df1,1,function(x){t.test(x[1:10], x[51:60])$p.value})
+D4=data_Matrix$p.value
+D_adjust = "p.adjust"(D4, method = "fdr")
+
+
+
+
+#names of differntiate genes by condition
+df21<-data.frame(log2FC_A)
+df22<-data.frame(A_adjust)
+df23<-data.frame(log2FC_B)
+df24<-data.frame(B_adjust)
+df25<-data.frame(log2FC_C)
+df26<-data.frame(C_adjust)
+df27<-data.frame(log2FC_D)
+df28<-data.frame(D_adjust)
+df30<-cbind(df21, df22) 
+df31<-cbind(df23, df24)
+df32<-cbind(df25, df26)
+df33<-cbind(df27, df28)
+newdata1 <-subset(df30, (log2FC_A>=1 | log2FC_A<=-1) & A_adjust<=0.05 )
+newdata2 <-subset(df31, (log2FC_B>=1 | log2FC_B<=-1) & B_adjust<=0.05 )
+newdata3 <-subset(df32, (log2FC_C>=1 | log2FC_C<=-1) & C_adjust<=0.05 )
+newdata4 <-subset(df33, (log2FC_D>=1 | log2FC_D<=-1) & D_adjust<=0.05 )
+View(newdata1)
+View(newdata2)
+View(newdata3)
+View(newdata4)
+
+#number of differantiate genes by condition
+t_g <- which(abs(log2FC_TG)>=1 & TG_adjust<=0.05)
+a_A <- which(abs(log2FC_A)>=1 & A_adjust<=0.05)
+b_B <- which(abs(log2FC_B)>=1 & B_adjust<=0.05)
+c_C <-which(abs(log2FC_C)>=1 & C_adjust<=0.05)
+d_D <- which(abs(log2FC_D)>=1 & D_adjust<=0.05)
+View(t_g)
+library(plyr)
+df3 <- data.frame(t_g)
+df4 <- data.frame(a_A)
+df5 <- data.frame(b_B)
+df6 <- data.frame(c_C)
+df7 <- data.frame(d_D)
+
+df_combined <- rbind.fill(df3, df4, df5, df6, df7)
+
+library(utils)
+View(df_combined)
+
+Transgenic=nrow(df3)
+TherA=nrow(df4)
+TherB=nrow(df5)
+TherC=nrow(df6)
+TherD=nrow(df7)
+
+df_final=data.frame(Transgenic, TherA ,TherB ,TherC , TherD)
+
+View(df_final)
+
+
+
+
+#assign 3
+d_f1 <- data.frame(log2FC_TG, log2FC_A, log2FC_B, log2FC_C, log2FC_D )
+d_f2 <- data.frame(TG_adjust)
+d_f3 <- cbind(d_f1, d_f2)
+View(d_f3)
+
+novodata <-subset(d_f3, (log2FC_TG>=1 | log2FC_TG<=-1) & TG_adjust<=0.05 )
+novodata_hm <- novodata[-6]
+
+View(novodata_hm)
+#creating heatmap
+novodataHeatMap <-as.matrix(novodata_hm)
+library(gplots)
+heatmap.2(novodataHeatMap, trace="none")
+
+#creating dendrogram from the same clustering of heatmap
+library("ggplot2")
+library("ggdendro")
+library("reshape2")
+library("grid")
+
+otter.dendro <- as.dendrogram(hclust(d = dist(x = novodataHeatMap)))
+dendro.plot <- ggdendrogram(data = otter.dendro, rotate = TRUE)
+dendro.plot1 <- dendro.plot + theme(axis.text.y = element_text(size = 6))
+print(dendro.plot1)
+
+#kmeans with animation
+install.packages("animation")	
+set.seed(2345)
+library(animation)
+kmeans.ani(novodataHeatMap, 7)
+
+#creating kmeans with name of genes
+library(tidyverse) 
+library(cluster)    
+
+
+k2 <- kmeans(novodataHeatMap, centers = 7, nstart = 25)
+novodataHeatMap %>%
+  as_tibble() %>%
+  mutate(cluster = k2$cluster,
+         state = row.names(novodata_hm)) %>%
+  ggplot(aes(rowMeans.TG_df1., rowMeans.A_df1., rowMeans.B_df1., rowMeans.C_df1., rowMeans.D_df1., color = factor(cluster), label = state)) +
+  geom_text()
+#View of cluster and which gene contain every cluster
+k2
+
+
+
+out <- cbind(novodata_hm, clusterNum = k2$cluster)
+View(out)
+out1<-out[-(1:5)]
+View(out1)
+
+
+
+#different view of clustering with names of genes
+cluster1<-subset(out1, clusterNum =="1")
+View(cluster1)
+
+cluster2<-subset(out1, clusterNum =="2")
+View(cluster2)
+
+cluster3<-subset(out1, clusterNum =="3")
+View(cluster3)
+
+cluster4<-subset(out1, clusterNum =="4")
+View(cluster4)
+
+cluster5<-subset(out1, clusterNum =="5")
+View(cluster5)
+
+cluster6<-subset(out1, clusterNum =="6")
+View(cluster6)
+
+cluster7<-subset(out1, clusterNum =="7")
+View(cluster7)
